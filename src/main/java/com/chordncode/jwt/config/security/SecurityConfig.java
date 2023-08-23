@@ -6,12 +6,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -29,11 +32,12 @@ public class SecurityConfig {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    @Bean
     public SecurityFilterChain filterChain (HttpSecurity http) throws Exception{
         return http.httpBasic(basic -> basic.disable())
                     .csrf(csrf -> csrf.disable())
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                    .authorizeRequests(request -> request.antMatchers("sign-api/sign-in", "sign-api/sign-up", "sign-api/exception").permitAll()
+                    .authorizeHttpRequests(request -> request.antMatchers("/sign-api/sign-in", "/sign-api/sign-up", "/sign-api/exception").permitAll()
                                                         .antMatchers(HttpMethod.GET, "/product/**").permitAll()
                                                         .antMatchers("**exception**").permitAll()
                                                         .anyRequest().hasRole("ADMIN"))
@@ -48,7 +52,7 @@ public class SecurityConfig {
                                                                             response.getWriter().print("Access Denied");
                                                                 }
                                                             }))
-                                                            .exceptionHandling(handling -> handling.authenticationEntryPoint(new AuthenticationEntryPoint() {
+                    .exceptionHandling(handling -> handling.authenticationEntryPoint(new AuthenticationEntryPoint() {
                                                                 @Override
                                                                 public void commence(HttpServletRequest request,
                                                                         HttpServletResponse response,
@@ -63,6 +67,10 @@ public class SecurityConfig {
                     .build();
                 }
 
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
 
 
 }
